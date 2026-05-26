@@ -39,6 +39,10 @@ tests/
 ## Stage 1 Validation
 
 ```bash
-tree -L 3
+python -m pip install -e .
 python -m compileall src
+pytest -q
+tree -L 3
 ```
+
+These checks confirm that the `src/` package layout, `pyproject.toml`, and minimal test suite are aligned. Stage 1 still does not implement parsers, downloaders, or data processing logic.
