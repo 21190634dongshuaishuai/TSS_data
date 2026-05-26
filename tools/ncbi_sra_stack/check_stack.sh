@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source "/home/m252202014/TSS/tools/ncbi_sra_stack/env.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/env.sh"
 echo "python=$(python -V 2>&1)"
 echo "which datasets=$(command -v datasets)"
 datasets version 2>&1 | head -5 || datasets --version 2>&1 | head -5

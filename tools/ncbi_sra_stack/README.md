@@ -5,21 +5,21 @@ This directory keeps the NCBI data download tools for the TSS pipeline under the
 ## Load environment
 
 ```bash
-source /home/m252202014/TSS/tools/ncbi_sra_stack/env.sh
+source tools/ncbi_sra_stack/env.sh
 ```
 
 This activates the `tss` conda environment when possible and puts this stack's `bin/` directory first in `PATH`.
 
 ## Included entry points
 
-- `datasets` / `dataformat`: from `/home/m252202014/.conda/envs/tss/bin`
+- `datasets` / `dataformat`: from `$HOME/.conda/envs/tss/bin`
 - `prefetch`, `fasterq-dump`, `fastq-dump`, `vdb-config`: from the local copy of SRA Toolkit 3.1.1
-- SRA cache/work area: `/home/m252202014/TSS/tools/ncbi_sra_stack/cache/sra`
+- SRA cache/work area: `$TSS_ROOT/tools/ncbi_sra_stack/cache/sra`
 
 ## Typical usage
 
 ```bash
-source /home/m252202014/TSS/tools/ncbi_sra_stack/env.sh
+source tools/ncbi_sra_stack/env.sh
 
 datasets --version
 prefetch SRRxxxxxxx -O /path/to/prefetchs
@@ -32,11 +32,10 @@ For SRA raw reads, prefer `prefetch` followed by `fasterq-dump`.
 
 ## Optional proxy
 
-The remote proxy `127.0.0.1:55336` has been tested successfully for `curl` and `git`.
-When it is running, load:
+When a local proxy is running, load:
 
 ```bash
-source /home/m252202014/TSS/tools/ncbi_sra_stack/env_proxy.sh
+source tools/ncbi_sra_stack/env_proxy.sh
 ```
 
 Use plain `env.sh` when the proxy is not running.
@@ -44,3 +43,4 @@ Use plain `env.sh` when the proxy is not running.
 ## Aspera status
 
 SRA Toolkit is configured in this stack. Aspera Connect is not installed yet in this user stack because the historical CloudFront URL in the project readme now returns `404 Not Found`. `prefetch` and `fasterq-dump` are available without Aspera; Aspera can be added later if a valid IBM installer URL or existing `ascp` binary is provided.
+

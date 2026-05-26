@@ -2,7 +2,7 @@
 # Optional proxy layer for the TSS NCBI/SRA stack.
 # Use this only when the remote proxy at 127.0.0.1:55336 is running.
 
-source "/home/m252202014/TSS/tools/ncbi_sra_stack/env.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/ncbi_sra_stack/env.sh"
 export http_proxy="http://127.0.0.1:55336"
 export https_proxy="http://127.0.0.1:55336"
 export HTTP_PROXY="$http_proxy"

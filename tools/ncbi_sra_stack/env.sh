@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # Source this file before running the NCBI/SRA stack:
-#   source /home/m252202014/TSS/tools/ncbi_sra_stack/env.sh
+#   source tools/ncbi_sra_stack/env.sh
+# Or from the project root:
+#   source $(git rev-parse --show-toplevel)/tools/ncbi_sra_stack/env.sh
+
+# Resolve TSS_ROOT: prefer env var, else derive from this script's location
+if [ -z "${TSS_ROOT:-}" ]; then
+  TSS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fi
+export TSS_ROOT
 
 if [ -f /usr/local/anaconda3/etc/profile.d/conda.sh ]; then
   source /usr/local/anaconda3/etc/profile.d/conda.sh
@@ -9,10 +17,10 @@ elif [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
   source "$HOME/anaconda3/etc/profile.d/conda.sh"
   conda activate tss
 else
-  export PATH="/home/m252202014/.conda/envs/tss/bin:$PATH"
+  export PATH="$HOME/.conda/envs/tss/bin:$PATH"
 fi
 
-export TSS_NCBI_STACK="/home/m252202014/TSS/tools/ncbi_sra_stack"
+export TSS_NCBI_STACK="$TSS_ROOT/tools/ncbi_sra_stack"
 export TSS_NCBI_BIN="$TSS_NCBI_STACK/bin"
 export TSS_SRA_CACHE="$TSS_NCBI_STACK/cache/sra"
 export TSS_NCBI_TMP="$TSS_NCBI_STACK/tmp"
@@ -30,3 +38,4 @@ fi
 if [ -f "$HOME/.config/ncbi/env" ]; then
   source "$HOME/.config/ncbi/env"
 fi
+
