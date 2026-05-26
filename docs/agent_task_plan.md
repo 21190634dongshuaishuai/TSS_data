@@ -44,8 +44,10 @@ GCF selected_accessions.txt
 ### Acceptance Commands
 
 ```bash
-tree -L 3
+python -m pip install -e .
 python -m compileall src
+pytest -q
+tree -L 3
 ```
 
 ## Later Stages
