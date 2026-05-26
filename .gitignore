@@ -20,7 +20,17 @@ tools/ncbi_sra_stack/cache/
 tools/ncbi_sra_stack/tmp/
 
 # Data files (large, regenerated)
-data/
+data/*
+!data/input/
+!data/raw/
+!data/interim/
+!data/processed/
+!data/logs/
+!data/input/.gitkeep
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/logs/.gitkeep
 
 # OS
 .DS_Store
