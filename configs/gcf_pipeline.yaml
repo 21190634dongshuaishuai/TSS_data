@@ -18,6 +18,7 @@ organism_type_rules:
 paths:
   input_accessions: data/input/selected_accessions.txt
   raw_dir: data/raw
+  download_zip: data/raw/ncbi_gcf_genomes.zip
   interim_dir: data/interim
   processed_dir: data/processed
   log_dir: data/logs

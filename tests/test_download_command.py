@@ -54,6 +54,7 @@ def test_run_download_dry_run_prints_command_without_downloading(tmp_path, monke
         paths=type(config.paths)(
             input_accessions=accessions,
             raw_dir=tmp_path / "raw",
+            download_zip=tmp_path / "raw" / "custom_batch.zip",
             interim_dir=config.paths.interim_dir,
             processed_dir=config.paths.processed_dir,
             log_dir=config.paths.log_dir,
@@ -67,5 +68,30 @@ def test_run_download_dry_run_prints_command_without_downloading(tmp_path, monke
 
     assert command[0:4] == ["datasets", "download", "genome", "accession"]
     assert "--dehydrated" in output
-    assert "ncbi_gcf_genomes.zip" in output
-    assert not (tmp_path / "raw" / "ncbi_gcf_genomes.zip").exists()
+    assert "custom_batch.zip" in output
+    assert not (tmp_path / "raw" / "custom_batch.zip").exists()
+
+
+def test_download_command_uses_configured_output_zip(tmp_path):
+    config = load_config("configs/gcf_pipeline.yaml")
+    config = type(config)(
+        assembly_scope=config.assembly_scope,
+        assembly_source=config.assembly_source,
+        include_files=config.include_files,
+        upstream_window=config.upstream_window,
+        organism_type_rules=config.organism_type_rules,
+        paths=type(config.paths)(
+            input_accessions=config.paths.input_accessions,
+            raw_dir=tmp_path / "raw",
+            download_zip=tmp_path / "raw" / "pilot_escherichia.zip",
+            interim_dir=config.paths.interim_dir,
+            processed_dir=config.paths.processed_dir,
+            log_dir=config.paths.log_dir,
+        ),
+        config_path=config.config_path,
+        project_root=config.project_root,
+    )
+
+    command = build_datasets_download_command(config, "data/input/selected_accessions.txt")
+
+    assert command[command.index("--filename") + 1].endswith("pilot_escherichia.zip")

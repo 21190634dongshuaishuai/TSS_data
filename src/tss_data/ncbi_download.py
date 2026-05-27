@@ -12,8 +12,6 @@ from tss_data.accession import validate_accession_file
 from tss_data.config import PipelineConfig
 
 
-DEFAULT_OUTPUT_FILENAME = "ncbi_gcf_genomes.zip"
-
 
 def build_datasets_download_command(
     config: PipelineConfig,
@@ -29,7 +27,7 @@ def build_datasets_download_command(
     """
 
     include_files = ",".join(config.include_files)
-    output_zip = config.paths.raw_dir / DEFAULT_OUTPUT_FILENAME
+    output_zip = config.paths.download_zip
     key = os.environ.get("NCBI_API_KEY") if api_key is None else api_key
 
     command = [

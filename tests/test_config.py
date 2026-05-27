@@ -19,6 +19,7 @@ def base_config():
         "paths": {
             "input_accessions": "data/input/selected_accessions.txt",
             "raw_dir": "data/raw",
+            "download_zip": "data/raw/ncbi_gcf_genomes.zip",
             "interim_dir": "data/interim",
             "processed_dir": "data/processed",
             "log_dir": "data/logs",
@@ -43,6 +44,7 @@ def test_default_config_loads_required_stage2_values():
     assert config.upstream_window == {"prokaryote": 300, "eukaryote": 1000}
     assert config.organism_type_rules["Bacteria"] == "prokaryote"
     assert config.paths.input_accessions.name == "selected_accessions.txt"
+    assert config.paths.download_zip.name == "ncbi_gcf_genomes.zip"
 
 
 def test_missing_assembly_scope_fails(tmp_path):
@@ -98,4 +100,20 @@ def test_invalid_organism_type_value_fails(tmp_path):
     config["organism_type_rules"]["Viruses"] = "virus"
 
     with pytest.raises(ValueError, match="organism_type_rules.Viruses"):
+        load_config(write_config(tmp_path, config))
+
+
+def test_download_zip_must_be_zip_file(tmp_path):
+    config = base_config()
+    config["paths"]["download_zip"] = "data/raw/ncbi_gcf_genomes.txt"
+
+    with pytest.raises(ValueError, match="paths.download_zip must point to a .zip file"):
+        load_config(write_config(tmp_path, config))
+
+
+def test_download_zip_must_stay_inside_project(tmp_path):
+    config = base_config()
+    config["paths"]["download_zip"] = "/tmp/ncbi_gcf_genomes.zip"
+
+    with pytest.raises(ValueError, match="paths.download_zip must stay within the project directory"):
         load_config(write_config(tmp_path, config))

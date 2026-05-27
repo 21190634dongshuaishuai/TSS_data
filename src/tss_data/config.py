@@ -15,6 +15,7 @@ ALLOWED_ORGANISM_TYPES = ("eukaryote", "prokaryote", "exclude")
 REQUIRED_PATH_KEYS = (
     "input_accessions",
     "raw_dir",
+    "download_zip",
     "interim_dir",
     "processed_dir",
     "log_dir",
@@ -25,6 +26,7 @@ REQUIRED_PATH_KEYS = (
 class PipelinePaths:
     input_accessions: Path
     raw_dir: Path
+    download_zip: Path
     interim_dir: Path
     processed_dir: Path
     log_dir: Path
@@ -75,6 +77,7 @@ def load_config(path: str | Path) -> PipelineConfig:
     paths = PipelinePaths(
         input_accessions=_resolve_project_path(project_root, paths_raw["input_accessions"]),
         raw_dir=_resolve_project_path(project_root, paths_raw["raw_dir"]),
+        download_zip=_resolve_download_zip(project_root, paths_raw["download_zip"]),
         interim_dir=_resolve_project_path(project_root, paths_raw["interim_dir"]),
         processed_dir=_resolve_project_path(project_root, paths_raw["processed_dir"]),
         log_dir=_resolve_project_path(project_root, paths_raw["log_dir"]),
@@ -162,3 +165,20 @@ def _resolve_project_path(project_root: Path, value: Any) -> Path:
     if not path.is_absolute():
         path = project_root / path
     return path.resolve()
+
+
+def _resolve_download_zip(project_root: Path, value: Any) -> Path:
+    path = _resolve_project_path(project_root, value)
+    if path.suffix != ".zip":
+        raise ValueError("paths.download_zip must point to a .zip file")
+    if not _is_relative_to(path, project_root):
+        raise ValueError("paths.download_zip must stay within the project directory")
+    return path
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
