@@ -47,13 +47,27 @@ def validate_gcf_accession(accession: str) -> str:
 def validate_accession_file(path: str | Path) -> list[str]:
     """Validate, de-duplicate, and return GCF accessions from a file."""
 
+    accession_path = Path(path).expanduser()
     unique_accessions: list[str] = []
     seen: set[str] = set()
-    for accession in read_accession_list(path):
-        validated = validate_gcf_accession(accession)
-        if validated in seen:
-            warnings.warn(f"Duplicate accession ignored: {validated}", UserWarning, stacklevel=2)
-            continue
-        seen.add(validated)
-        unique_accessions.append(validated)
+    with accession_path.open("r", encoding="utf-8") as handle:
+        for line_no, line in enumerate(handle, start=1):
+            accession = line.strip()
+            if not accession:
+                continue
+            try:
+                validated = validate_gcf_accession(accession)
+            except AccessionValidationError as exc:
+                raise AccessionValidationError(
+                    f"Invalid accession at {accession_path}:{line_no}: {accession}. {exc}"
+                ) from exc
+            if validated in seen:
+                warnings.warn(
+                    f"Duplicate accession ignored at {accession_path}:{line_no}: {validated}",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                continue
+            seen.add(validated)
+            unique_accessions.append(validated)
     return unique_accessions

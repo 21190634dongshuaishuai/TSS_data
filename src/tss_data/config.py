@@ -10,6 +10,8 @@ import yaml
 
 
 REQUIRED_INCLUDE_FILES = ("genome", "gff3", "gtf", "gbff", "rna", "seq-report")
+REQUIRED_ORGANISM_TYPE_RULES = ("Eukaryota", "Bacteria", "Archaea", "Viruses")
+ALLOWED_ORGANISM_TYPES = ("eukaryote", "prokaryote", "exclude")
 REQUIRED_PATH_KEYS = (
     "input_accessions",
     "raw_dir",
@@ -58,27 +60,9 @@ def load_config(path: str | Path) -> PipelineConfig:
     if assembly_source != "RefSeq":
         raise ValueError("assembly_source must be 'RefSeq'")
 
-    include_files = raw.get("include_files")
-    if not isinstance(include_files, list) or not all(isinstance(item, str) for item in include_files):
-        raise ValueError("include_files must be a list of strings")
-    missing = [item for item in REQUIRED_INCLUDE_FILES if item not in include_files]
-    if missing:
-        raise ValueError(f"include_files missing required entries: {', '.join(missing)}")
-
-    upstream_window = raw.get("upstream_window")
-    if not isinstance(upstream_window, dict):
-        raise ValueError("upstream_window must be a mapping")
-    normalized_windows: dict[str, int] = {}
-    for key in ("prokaryote", "eukaryote"):
-        value = upstream_window.get(key)
-        if not isinstance(value, int) or value <= 0:
-            raise ValueError(f"upstream_window.{key} must be a positive integer")
-        normalized_windows[key] = value
-
-    organism_type_rules = raw.get("organism_type_rules")
-    if not isinstance(organism_type_rules, dict):
-        raise ValueError("organism_type_rules must be a mapping")
-    normalized_rules = {str(key): str(value) for key, value in organism_type_rules.items()}
+    include_files = _validate_include_files(raw.get("include_files"))
+    upstream_window = _validate_upstream_window(raw.get("upstream_window"))
+    organism_type_rules = _validate_organism_type_rules(raw.get("organism_type_rules"))
 
     paths_raw = raw.get("paths")
     if not isinstance(paths_raw, dict):
@@ -99,13 +83,69 @@ def load_config(path: str | Path) -> PipelineConfig:
     return PipelineConfig(
         assembly_scope=assembly_scope,
         assembly_source=assembly_source,
-        include_files=tuple(include_files),
-        upstream_window=normalized_windows,
-        organism_type_rules=normalized_rules,
+        include_files=include_files,
+        upstream_window=upstream_window,
+        organism_type_rules=organism_type_rules,
         paths=paths,
         config_path=config_path,
         project_root=project_root,
     )
+
+
+def _validate_include_files(value: Any) -> tuple[str, ...]:
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError("include_files must be a list of strings")
+    duplicates = sorted({item for item in value if value.count(item) > 1})
+    if duplicates:
+        raise ValueError(f"include_files contains duplicate entries: {', '.join(duplicates)}")
+    missing = [item for item in REQUIRED_INCLUDE_FILES if item not in value]
+    unknown = [item for item in value if item not in REQUIRED_INCLUDE_FILES]
+    if missing:
+        raise ValueError(f"include_files missing required entries: {', '.join(missing)}")
+    if unknown:
+        raise ValueError(f"include_files contains unsupported entries: {', '.join(unknown)}")
+    return tuple(value)
+
+
+def _validate_upstream_window(value: Any) -> dict[str, int]:
+    if not isinstance(value, dict):
+        raise ValueError("upstream_window must be a mapping")
+    required = ("prokaryote", "eukaryote")
+    missing = [key for key in required if key not in value]
+    unknown = [key for key in value if key not in required]
+    if missing:
+        raise ValueError(f"upstream_window missing required entries: {', '.join(missing)}")
+    if unknown:
+        raise ValueError(f"upstream_window contains unsupported entries: {', '.join(unknown)}")
+
+    normalized_windows: dict[str, int] = {}
+    for key in required:
+        window = value.get(key)
+        if not isinstance(window, int) or window <= 0:
+            raise ValueError(f"upstream_window.{key} must be a positive integer")
+        normalized_windows[key] = window
+    return normalized_windows
+
+
+def _validate_organism_type_rules(value: Any) -> dict[str, str]:
+    if not isinstance(value, dict):
+        raise ValueError("organism_type_rules must be a mapping")
+    missing = [key for key in REQUIRED_ORGANISM_TYPE_RULES if key not in value]
+    unknown = [key for key in value if key not in REQUIRED_ORGANISM_TYPE_RULES]
+    if missing:
+        raise ValueError(f"organism_type_rules missing required entries: {', '.join(missing)}")
+    if unknown:
+        raise ValueError(f"organism_type_rules contains unsupported entries: {', '.join(unknown)}")
+
+    normalized_rules: dict[str, str] = {}
+    for key in REQUIRED_ORGANISM_TYPE_RULES:
+        organism_type = value[key]
+        if organism_type not in ALLOWED_ORGANISM_TYPES:
+            raise ValueError(
+                f"organism_type_rules.{key} must be one of: {', '.join(ALLOWED_ORGANISM_TYPES)}"
+            )
+        normalized_rules[key] = organism_type
+    return normalized_rules
 
 
 def _require_str(config: dict[str, Any], key: str) -> str:

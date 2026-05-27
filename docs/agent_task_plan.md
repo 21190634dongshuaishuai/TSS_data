@@ -50,6 +50,50 @@ pytest -q
 tree -L 3
 ```
 
+
+## Stage 2: Config File and Accession Validation
+
+### Tasks
+
+1. Add `configs/gcf_pipeline.yaml`.
+2. Implement `src/tss_data/config.py` for strict config loading.
+3. Implement `src/tss_data/accession.py` for GCF accession validation.
+4. Add positive and negative tests for accession and config validation.
+
+### Do Not Do In Stage 2
+
+- Do not build NCBI Datasets download commands.
+- Do not download genome packages.
+- Do not parse GFF3, GTF, GBFF, FASTA, or sequence reports.
+- Do not add SRA, Aspera, TPM, or RNA-seq logic to the main pipeline.
+
+### Acceptance Commands
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest -q
+python - <<'PY'
+from tss_data.config import load_config
+from tss_data.accession import validate_gcf_accession
+
+cfg = load_config("configs/gcf_pipeline.yaml")
+assert cfg.assembly_scope == "GCF_only"
+assert validate_gcf_accession("GCF_000005845.2") == "GCF_000005845.2"
+print("Stage 2 validation passed")
+PY
+```
+
+### Stage 2 Outputs
+
+```text
+configs/gcf_pipeline.yaml
+src/tss_data/config.py
+src/tss_data/accession.py
+tests/test_config.py
+tests/test_accession.py
+```
+
 ## Later Stages
 
 Stage 2 adds config loading and GCF accession validation. Stage 3 adds NCBI Datasets dry-run command construction. Later stages parse metadata, build sequence indices, parse annotations, derive candidates, extract sequences, and generate QC summaries.
