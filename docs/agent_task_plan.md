@@ -94,6 +94,39 @@ tests/test_config.py
 tests/test_accession.py
 ```
 
+
+## Stage 3: NCBI Datasets Dry-Run Download Command
+
+### Tasks
+
+1. Implement `src/tss_data/ncbi_download.py`.
+2. Build `datasets download genome accession` commands from `configs/gcf_pipeline.yaml`.
+3. Support optional `NCBI_API_KEY` from the environment without storing it in config or code.
+4. Add tests for command construction and dry-run behavior.
+
+### Do Not Do In Stage 3
+
+- Do not perform real downloads in tests.
+- Do not call SRA Toolkit.
+- Do not call Aspera.
+- Do not implement parsers or candidate derivation.
+
+### Acceptance Commands
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest tests/test_download_command.py -q
+pytest -q
+```
+
+### Stage 3 Outputs
+
+```text
+src/tss_data/ncbi_download.py
+tests/test_download_command.py
+```
+
 ## Later Stages
 
 Stage 3 adds NCBI Datasets dry-run command construction. Later stages parse metadata, build sequence indices, parse annotations, derive candidates, extract sequences, and generate QC summaries.

@@ -73,3 +73,22 @@ assert validate_gcf_accession("GCF_000005845.2") == "GCF_000005845.2"
 print("Stage 2 validation passed")
 PY
 ```
+
+## Stage 3 Status
+
+Stage 3 adds dry-run construction for the NCBI Datasets genome download command:
+
+- `src/tss_data/ncbi_download.py` builds a `datasets download genome accession` command from the validated config.
+- The command includes `--assembly-source RefSeq`, `--include genome,gff3,gtf,gbff,rna,seq-report`, `--dehydrated`, and a standard output ZIP path under `data/raw/`.
+- `NCBI_API_KEY` is optional and is read only from the environment. It is not written into config files or source-controlled data.
+
+Stage 3 still does not perform real downloads in tests and does not use SRA Toolkit, Aspera, TPM, or RNA-seq logic.
+
+## Stage 3 Validation
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest tests/test_download_command.py -q
+pytest -q
+```
