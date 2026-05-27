@@ -96,4 +96,4 @@ tests/test_accession.py
 
 ## Later Stages
 
-Stage 2 adds config loading and GCF accession validation. Stage 3 adds NCBI Datasets dry-run command construction. Later stages parse metadata, build sequence indices, parse annotations, derive candidates, extract sequences, and generate QC summaries.
+Stage 3 adds NCBI Datasets dry-run command construction. Later stages parse metadata, build sequence indices, parse annotations, derive candidates, extract sequences, and generate QC summaries.
