@@ -95,3 +95,39 @@ def test_download_command_uses_configured_output_zip(tmp_path):
     command = build_datasets_download_command(config, "data/input/selected_accessions.txt")
 
     assert command[command.index("--filename") + 1].endswith("pilot_escherichia.zip")
+
+
+def test_run_download_creates_configured_output_parent_for_real_run(tmp_path, monkeypatch):
+    config = load_config("configs/gcf_pipeline.yaml")
+    accessions = tmp_path / "selected_accessions.txt"
+    accessions.write_text("GCF_000005845.2\n", encoding="utf-8")
+    nested_zip = tmp_path / "raw" / "batches" / "pilot_escherichia.zip"
+    config = type(config)(
+        assembly_scope=config.assembly_scope,
+        assembly_source=config.assembly_source,
+        include_files=config.include_files,
+        upstream_window=config.upstream_window,
+        organism_type_rules=config.organism_type_rules,
+        paths=type(config.paths)(
+            input_accessions=accessions,
+            raw_dir=tmp_path / "raw",
+            download_zip=nested_zip,
+            interim_dir=config.paths.interim_dir,
+            processed_dir=config.paths.processed_dir,
+            log_dir=config.paths.log_dir,
+        ),
+        config_path=config.config_path,
+        project_root=config.project_root,
+    )
+    calls = []
+
+    def fake_run(command, check):
+        calls.append((command, check))
+
+    monkeypatch.setattr("tss_data.ncbi_download.subprocess.run", fake_run)
+
+    command = run_download(config, dry_run=False)
+
+    assert nested_zip.parent.is_dir()
+    assert calls == [(command, True)]
+    assert command[command.index("--filename") + 1] == str(nested_zip)

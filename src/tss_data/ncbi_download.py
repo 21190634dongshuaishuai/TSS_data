@@ -59,7 +59,7 @@ def run_download(config: PipelineConfig, dry_run: bool = True) -> list[str]:
         print(format_command(command, redact_api_key=True))
         return command
 
-    config.paths.raw_dir.mkdir(parents=True, exist_ok=True)
+    config.paths.download_zip.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(command, check=True)
     return command
 
