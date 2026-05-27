@@ -28,6 +28,11 @@ data/*
 !data/interim/
 !data/processed/
 !data/logs/
+data/input/*
+data/raw/*
+data/interim/*
+data/processed/*
+data/logs/*
 !data/input/.gitkeep
 !data/raw/.gitkeep
 !data/interim/.gitkeep

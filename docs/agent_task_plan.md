@@ -127,6 +127,41 @@ src/tss_data/ncbi_download.py
 tests/test_download_command.py
 ```
 
+
+## Stage 4: Metadata and Assembly Table
+
+### Tasks
+
+1. Implement `src/tss_data/metadata.py`.
+2. Parse local NCBI Datasets JSONL metadata into normalized assembly rows.
+3. Write `assemblies.tsv` with the standard Stage 4 schema.
+4. Infer `organism_type` from `taxon_superkingdom` using config rules.
+5. Add tests for bacterial, eukaryotic, viral, missing-field, and missing-accession cases.
+
+### Do Not Do In Stage 4
+
+- Do not repeat network metadata requests when a local package metadata file exists.
+- Do not parse FASTA, GFF3, GTF, GBFF, or sequence reports.
+- Do not derive TSS/promoter candidates.
+- Do not add SRA, Aspera, TPM, or RNA-seq logic to the main pipeline.
+
+### Acceptance Commands
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest tests/test_metadata.py -q
+pytest -q
+```
+
+### Stage 4 Outputs
+
+```text
+src/tss_data/metadata.py
+tests/test_metadata.py
+data/processed/assemblies.tsv
+```
+
 ## Later Stages
 
-Stage 3 adds NCBI Datasets dry-run command construction. Later stages parse metadata, build sequence indices, parse annotations, derive candidates, extract sequences, and generate QC summaries.
+Stage 5 builds the sequence index. Later stages parse annotations, derive candidates, extract sequences, and generate QC summaries.

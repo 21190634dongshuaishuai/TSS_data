@@ -92,3 +92,23 @@ python -m compileall src
 pytest tests/test_download_command.py -q
 pytest -q
 ```
+
+## Stage 4 Status
+
+Stage 4 adds local NCBI Datasets metadata parsing for `assemblies.tsv`:
+
+- `src/tss_data/metadata.py` parses local JSONL metadata records from a downloaded NCBI package or `dataformat` output.
+- The parser normalizes assembly accession, organism name, taxid, superkingdom, organism type, assembly level, RefSeq category, annotation provider/date, genome size, and download date.
+- Optional fields are written as empty strings when missing, but missing or invalid `GCF_` assembly accessions fail fast.
+- Virus records are retained with `organism_type = exclude` so later stages can report and filter them explicitly.
+
+Stage 4 still does not parse FASTA, GFF3, GTF, GBFF, or derive TSS/promoter candidates.
+
+## Stage 4 Validation
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest tests/test_metadata.py -q
+pytest -q
+```
