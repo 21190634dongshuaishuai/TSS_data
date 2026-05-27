@@ -21,6 +21,15 @@ REQUIRED_PATH_KEYS = (
     "log_dir",
 )
 
+REQUIRED_INVENTORY_ELIGIBILITY_KEYS = (
+    "require_gcf_prefix",
+    "exclude_suppressed",
+    "exclude_excluded_from_refseq",
+    "exclude_genome_rep_partial",
+    "allowed_groups",
+    "excluded_groups",
+)
+
 
 @dataclass(frozen=True)
 class PipelinePaths:
@@ -33,6 +42,26 @@ class PipelinePaths:
 
 
 @dataclass(frozen=True)
+class InventoryEligibilityRules:
+    require_gcf_prefix: bool
+    exclude_suppressed: bool
+    exclude_excluded_from_refseq: bool
+    exclude_genome_rep_partial: bool
+    allowed_groups: tuple[str, ...]
+    excluded_groups: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class InventoryConfig:
+    source_url: str
+    local_path: Path
+    output_dir: Path
+    allow_network: bool
+    force_download: bool
+    eligibility_rules: InventoryEligibilityRules
+
+
+@dataclass(frozen=True)
 class PipelineConfig:
     assembly_scope: str
     assembly_source: str
@@ -40,6 +69,7 @@ class PipelineConfig:
     upstream_window: dict[str, int]
     organism_type_rules: dict[str, str]
     paths: PipelinePaths
+    inventory: InventoryConfig
     config_path: Path
     project_root: Path
 
@@ -82,6 +112,7 @@ def load_config(path: str | Path) -> PipelineConfig:
         processed_dir=_resolve_project_path(project_root, paths_raw["processed_dir"]),
         log_dir=_resolve_project_path(project_root, paths_raw["log_dir"]),
     )
+    inventory = _validate_inventory_config(raw.get("inventory"), project_root)
 
     return PipelineConfig(
         assembly_scope=assembly_scope,
@@ -90,6 +121,7 @@ def load_config(path: str | Path) -> PipelineConfig:
         upstream_window=upstream_window,
         organism_type_rules=organism_type_rules,
         paths=paths,
+        inventory=inventory,
         config_path=config_path,
         project_root=project_root,
     )
@@ -149,6 +181,64 @@ def _validate_organism_type_rules(value: Any) -> dict[str, str]:
             )
         normalized_rules[key] = organism_type
     return normalized_rules
+
+
+def _validate_inventory_config(value: Any, project_root: Path) -> InventoryConfig:
+    if not isinstance(value, dict):
+        raise ValueError("inventory must be a mapping")
+
+    source_url = _require_str(value, "source_url")
+    local_path = _resolve_project_path(project_root, value.get("local_path"))
+    output_dir = _resolve_project_path(project_root, value.get("output_dir"))
+    allow_network = _require_bool(value, "allow_network")
+    force_download = _require_bool(value, "force_download")
+    rules = _validate_inventory_eligibility_rules(value.get("eligibility_rules"))
+
+    return InventoryConfig(
+        source_url=source_url,
+        local_path=local_path,
+        output_dir=output_dir,
+        allow_network=allow_network,
+        force_download=force_download,
+        eligibility_rules=rules,
+    )
+
+
+def _validate_inventory_eligibility_rules(value: Any) -> InventoryEligibilityRules:
+    if not isinstance(value, dict):
+        raise ValueError("inventory.eligibility_rules must be a mapping")
+    missing = [key for key in REQUIRED_INVENTORY_ELIGIBILITY_KEYS if key not in value]
+    unknown = [key for key in value if key not in REQUIRED_INVENTORY_ELIGIBILITY_KEYS]
+    if missing:
+        raise ValueError(f"inventory.eligibility_rules missing required entries: {', '.join(missing)}")
+    if unknown:
+        raise ValueError(f"inventory.eligibility_rules contains unsupported entries: {', '.join(unknown)}")
+
+    return InventoryEligibilityRules(
+        require_gcf_prefix=_require_bool(value, "require_gcf_prefix"),
+        exclude_suppressed=_require_bool(value, "exclude_suppressed"),
+        exclude_excluded_from_refseq=_require_bool(value, "exclude_excluded_from_refseq"),
+        exclude_genome_rep_partial=_require_bool(value, "exclude_genome_rep_partial"),
+        allowed_groups=_require_str_tuple(value, "allowed_groups"),
+        excluded_groups=_require_str_tuple(value, "excluded_groups"),
+    )
+
+
+def _require_bool(config: dict[str, Any], key: str) -> bool:
+    value = config.get(key)
+    if not isinstance(value, bool):
+        raise ValueError(f"{key} must be a boolean")
+    return value
+
+
+def _require_str_tuple(config: dict[str, Any], key: str) -> tuple[str, ...]:
+    value = config.get(key)
+    if not isinstance(value, list) or not value or not all(isinstance(item, str) and item for item in value):
+        raise ValueError(f"{key} must be a non-empty list of strings")
+    duplicates = sorted({item for item in value if value.count(item) > 1})
+    if duplicates:
+        raise ValueError(f"{key} contains duplicate entries: {', '.join(duplicates)}")
+    return tuple(value)
 
 
 def _require_str(config: dict[str, Any], key: str) -> str:

@@ -17,6 +17,28 @@ GCF selected_accessions.txt
 
 The first formal version uses `assembly_accession` values beginning with `GCF_` as the stable primary key. `GCA_` assemblies, SRA downloads, Aspera, TPM, and RNA-seq expression processing are outside the first-version main pipeline.
 
+
+## Stage 0 Status
+
+Stage 0 adds RefSeq GCF inventory profiling before any genome package download:
+
+- `configs/gcf_pipeline.yaml` now defines the RefSeq assembly summary source, local metadata path, inventory output directory, and eligibility rules.
+- `src/tss_data/inventory.py` downloads or reuses `assembly_summary_refseq.txt`, parses the `# assembly_accession` header, validates the GCF-only inventory, writes count summaries, and builds `gcf_download_eligibility.tsv`.
+- `src/tss_data/cli.py` adds the `inventory` command for running this stage from config.
+- Stage 0 outputs are regenerated under `data/metadata/` and `data/interim/inventory/`; generated data stays out of Git.
+
+Stage 0 does not download genome packages, parse FASTA/GFF3/GTF/GBFF, or derive TSS/promoter candidates.
+
+## Stage 0 Validation
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest tests/test_inventory.py -q
+python -m tss_data.cli inventory --config configs/gcf_pipeline.yaml
+pytest -q
+```
+
 ## Stage 1 Status
 
 Stage 1 isolates the previous prototype script under `scripts/legacy/` and creates the package skeleton under `src/tss_data/`. No parser, downloader, or data download is implemented in this stage.

@@ -24,6 +24,21 @@ def base_config():
             "processed_dir": "data/processed",
             "log_dir": "data/logs",
         },
+        "inventory": {
+            "source_url": "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt",
+            "local_path": "data/metadata/assembly_summary_refseq.txt",
+            "output_dir": "data/interim/inventory",
+            "allow_network": True,
+            "force_download": False,
+            "eligibility_rules": {
+                "require_gcf_prefix": True,
+                "exclude_suppressed": True,
+                "exclude_excluded_from_refseq": True,
+                "exclude_genome_rep_partial": False,
+                "allowed_groups": ["archaea", "bacteria", "fungi", "plant", "protozoa", "invertebrate", "vertebrate_mammalian", "vertebrate_other"],
+                "excluded_groups": ["viral"],
+            },
+        },
     }
 
 
@@ -45,6 +60,8 @@ def test_default_config_loads_required_stage2_values():
     assert config.organism_type_rules["Bacteria"] == "prokaryote"
     assert config.paths.input_accessions.name == "selected_accessions.txt"
     assert config.paths.download_zip.name == "ncbi_gcf_genomes.zip"
+    assert config.inventory.local_path.name == "assembly_summary_refseq.txt"
+    assert config.inventory.eligibility_rules.excluded_groups == ("viral",)
 
 
 def test_missing_assembly_scope_fails(tmp_path):
@@ -116,4 +133,20 @@ def test_download_zip_must_stay_inside_project(tmp_path):
     config["paths"]["download_zip"] = "/tmp/ncbi_gcf_genomes.zip"
 
     with pytest.raises(ValueError, match="paths.download_zip must stay within the project directory"):
+        load_config(write_config(tmp_path, config))
+
+
+def test_missing_inventory_config_fails(tmp_path):
+    config = base_config()
+    del config["inventory"]
+
+    with pytest.raises(ValueError, match="inventory must be a mapping"):
+        load_config(write_config(tmp_path, config))
+
+
+def test_inventory_requires_boolean_allow_network(tmp_path):
+    config = base_config()
+    config["inventory"]["allow_network"] = "yes"
+
+    with pytest.raises(ValueError, match="allow_network must be a boolean"):
         load_config(write_config(tmp_path, config))

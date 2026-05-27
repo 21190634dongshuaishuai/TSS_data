@@ -22,3 +22,26 @@ paths:
   interim_dir: data/interim
   processed_dir: data/processed
   log_dir: data/logs
+
+inventory:
+  source_url: https://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt
+  local_path: data/metadata/assembly_summary_refseq.txt
+  output_dir: data/interim/inventory
+  allow_network: true
+  force_download: false
+  eligibility_rules:
+    require_gcf_prefix: true
+    exclude_suppressed: true
+    exclude_excluded_from_refseq: true
+    exclude_genome_rep_partial: false
+    allowed_groups:
+      - archaea
+      - bacteria
+      - fungi
+      - plant
+      - protozoa
+      - invertebrate
+      - vertebrate_mammalian
+      - vertebrate_other
+    excluded_groups:
+      - viral

@@ -14,7 +14,10 @@ Use assembly_accession = GCF_xxx as the genome primary key
 ## Overall Workflow Target
 
 ```text
-GCF selected_accessions.txt
+RefSeq assembly_summary_refseq.txt
+  -> gcf_inventory.tsv
+  -> gcf_download_eligibility.tsv
+  -> selected_accessions.txt
   -> datasets download genome accession
   -> genome / gff3 / gtf / gbff / rna / seq-report
   -> assemblies.tsv
@@ -23,6 +26,53 @@ GCF selected_accessions.txt
   -> tss_promoter_candidates.tsv
   -> candidate_sequences.fasta
   -> qc_summary.tsv
+```
+
+
+## Stage 0: RefSeq GCF Inventory Profiling
+
+### Tasks
+
+1. Add inventory configuration for RefSeq assembly summary metadata.
+2. Implement `src/tss_data/inventory.py`.
+3. Parse `assembly_summary_refseq.txt` with the `# assembly_accession` header.
+4. Validate the GCF-only inventory and write QC summaries.
+5. Build `gcf_download_eligibility.tsv` for later `selected_accessions.txt` creation.
+6. Add `python -m tss_data.cli inventory --config configs/gcf_pipeline.yaml`.
+
+### Do Not Do In Stage 0
+
+- Do not download genome packages or NCBI Datasets ZIP files.
+- Do not parse FASTA, GFF3, GTF, GBFF, or sequence reports.
+- Do not derive TSS/promoter candidates.
+- Do not add SRA, Aspera, TPM, or RNA-seq logic to the main pipeline.
+
+### Acceptance Commands
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest tests/test_inventory.py -q
+python -m tss_data.cli inventory --config configs/gcf_pipeline.yaml
+pytest -q
+```
+
+### Stage 0 Outputs
+
+```text
+src/tss_data/inventory.py
+src/tss_data/cli.py
+tests/test_inventory.py
+data/metadata/assembly_summary_refseq.txt
+data/interim/inventory/gcf_inventory.tsv
+data/interim/inventory/gcf_count_by_group.tsv
+data/interim/inventory/gcf_count_by_assembly_level.tsv
+data/interim/inventory/gcf_count_by_refseq_category.tsv
+data/interim/inventory/gcf_count_by_genome_rep.tsv
+data/interim/inventory/gcf_count_by_version_status.tsv
+data/interim/inventory/gcf_count_by_annotation_provider.tsv
+data/interim/inventory/gcf_download_eligibility.tsv
+data/interim/inventory/inventory_qc_summary.tsv
 ```
 
 ## Stage 1: Repository Restructure and Legacy Isolation

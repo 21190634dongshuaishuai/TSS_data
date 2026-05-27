@@ -59,6 +59,7 @@ def test_run_download_dry_run_prints_command_without_downloading(tmp_path, monke
             processed_dir=config.paths.processed_dir,
             log_dir=config.paths.log_dir,
         ),
+        inventory=config.inventory,
         config_path=config.config_path,
         project_root=config.project_root,
     )
@@ -88,6 +89,7 @@ def test_download_command_uses_configured_output_zip(tmp_path):
             processed_dir=config.paths.processed_dir,
             log_dir=config.paths.log_dir,
         ),
+        inventory=config.inventory,
         config_path=config.config_path,
         project_root=config.project_root,
     )
@@ -116,6 +118,7 @@ def test_run_download_creates_configured_output_parent_for_real_run(tmp_path, mo
             processed_dir=config.paths.processed_dir,
             log_dir=config.paths.log_dir,
         ),
+        inventory=config.inventory,
         config_path=config.config_path,
         project_root=config.project_root,
     )
