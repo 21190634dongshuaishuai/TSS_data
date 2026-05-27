@@ -122,3 +122,53 @@ def test_unsupported_sequence_report_format_raises(tmp_path):
 
     with pytest.raises(ValueError, match="Unsupported sequence_report format"):
         parse_sequence_report(report, "GCF_000005845.2")
+
+
+def test_sequence_report_rejects_missing_sequence_accession(tmp_path):
+    report = tmp_path / "sequence_report.tsv"
+    report.write_text(
+        "accession\tlength\n\t4641652\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Missing sequence_accession"):
+        parse_sequence_report(report, "GCF_000005845.2")
+
+
+def test_sequence_report_rejects_duplicate_sequence_accession_within_assembly(tmp_path):
+    report = tmp_path / "sequence_report.tsv"
+    report.write_text(
+        "accession\tlength\nNC_000913.3\t4641652\nNC_000913.3\t4641652\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Duplicate sequence_accession"):
+        parse_sequence_report(report, "GCF_000005845.2")
+
+
+def test_sequence_report_rejects_invalid_sequence_length(tmp_path):
+    report = tmp_path / "sequence_report.tsv"
+    report.write_text(
+        "accession\tlength\nNC_000913.3\t-1\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Invalid sequence_length"):
+        parse_sequence_report(report, "GCF_000005845.2")
+
+
+def test_parse_sequence_report_dataformat_style_tsv_fields(tmp_path):
+    report = tmp_path / "sequence_report.tsv"
+    report.write_text(
+        "refseq-seq-acc\tchr-name\tSequence-Role\tassignedMoleculeLocationType\tseq-length\n"
+        "NC_000913.3\tChromosome\tassembled-molecule\tChromosome\t4641652\n",
+        encoding="utf-8",
+    )
+
+    rows = parse_sequence_report(report, "GCF_000005845.2")
+
+    assert rows[0]["sequence_accession"] == "NC_000913.3"
+    assert rows[0]["sequence_name"] == "Chromosome"
+    assert rows[0]["sequence_role"] == "assembled-molecule"
+    assert rows[0]["assigned_molecule"] == "Chromosome"
+    assert rows[0]["sequence_length"] == "4641652"

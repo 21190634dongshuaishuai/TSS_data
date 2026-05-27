@@ -135,7 +135,9 @@ def parse_sequence_report(sequence_report: str | Path, assembly_accession: str) 
         records = _read_delimited(path, delimiter="\t" if path.suffix == ".tsv" else ",")
     else:
         raise ValueError(f"Unsupported sequence_report format: {path}")
-    return [_normalize_sequence_record(record, accession) for record in records]
+    rows = [_normalize_sequence_record(record, accession) for record in records]
+    _validate_sequence_rows(rows, str(path))
+    return rows
 
 
 def _empty_manifest_row(accession: str) -> dict[str, str]:
@@ -207,16 +209,46 @@ def _normalize_sequence_record(record: dict[str, Any], assembly_accession: str) 
             "refseq_accession",
             "refseq-accession",
             "refseqAccession",
+            "refseq-seq-acc",
+            "RefSeq seq accession",
             "genbank_accession",
             "genbank-accession",
             "genBankAccession",
+            "genbank-seq-acc",
+            "GenBank seq accession",
         ),
-        "sequence_name": _get_record_value(record, "sequence_name", "sequence-name", "sequenceName", "name"),
-        "sequence_role": _get_record_value(record, "sequence_role", "sequence-role", "role", "assignedMoleculeRole"),
+        "sequence_name": _get_record_value(
+            record,
+            "sequence_name",
+            "sequence-name",
+            "sequenceName",
+            "chrName",
+            "chr-name",
+            "Chromosome name",
+            "ucscStyleName",
+            "ucsc-style-name",
+            "name",
+        ),
+        "sequence_role": _get_record_value(
+            record, "sequence_role", "sequence-role", "role", "assignedMoleculeRole"
+        ),
         "assigned_molecule": _get_record_value(
-            record, "assigned_molecule", "assigned-molecule", "assignedMolecule"
+            record,
+            "assigned_molecule",
+            "assigned-molecule",
+            "assignedMolecule",
+            "assignedMoleculeLocationType",
+            "mol-type",
+            "Molecule type",
         ),
-        "sequence_length": _get_record_value(record, "sequence_length", "sequence-length", "length"),
+        "sequence_length": _get_record_value(
+            record,
+            "sequence_length",
+            "sequence-length",
+            "length",
+            "seq-length",
+            "Seq length",
+        ),
     }
 
 
@@ -239,6 +271,22 @@ def _ensure_unique_accessions(accessions: Iterable[str], source: str) -> None:
         if accession in seen:
             raise ValueError(f"Duplicate assembly_accession in {source}: {accession}")
         seen.add(accession)
+
+
+def _validate_sequence_rows(rows: list[dict[str, str]], source: str) -> None:
+    seen: set[tuple[str, str]] = set()
+    for row in rows:
+        assembly = row.get("assembly_accession", "")
+        seq_acc = row.get("sequence_accession", "")
+        seq_len = row.get("sequence_length", "")
+        if not seq_acc:
+            raise ValueError(f"Missing sequence_accession in {source} for {assembly}")
+        if not seq_len or not seq_len.isdigit() or int(seq_len) <= 0:
+            raise ValueError(f"Invalid sequence_length in {source} for {assembly}:{seq_acc}")
+        key = (assembly, seq_acc)
+        if key in seen:
+            raise ValueError(f"Duplicate sequence_accession in {source}: {assembly}:{seq_acc}")
+        seen.add(key)
 
 
 def _write_tsv(rows: Iterable[dict[str, str]], output_path: str | Path, fields: tuple[str, ...]) -> None:
