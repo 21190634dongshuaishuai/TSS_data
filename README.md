@@ -113,3 +113,24 @@ python -m compileall src
 pytest tests/test_metadata.py -q
 pytest -q
 ```
+
+
+## Stage 5 Status
+
+Stage 5 adds local package file and sequence indexing:
+
+- `src/tss_data/sequence_index.py` discovers each selected assembly directory inside a rehydrated NCBI Datasets package.
+- It writes a file manifest for genome FASTA, RNA FASTA, GFF3, GTF, GBFF, and sequence report paths.
+- It parses `sequence_report.jsonl`, `sequence_report.tsv`, or `sequence_report.csv` into a normalized `sequences.tsv` table.
+- Missing package files are reported in the manifest instead of being silently ignored.
+
+Stage 5 still does not parse annotation features, infer TSS/promoter candidates, or extract promoter sequences.
+
+## Stage 5 Validation
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest tests/test_sequence_index.py -q
+pytest -q
+```

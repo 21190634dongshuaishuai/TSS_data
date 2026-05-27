@@ -162,6 +162,43 @@ tests/test_metadata.py
 data/processed/assemblies.tsv
 ```
 
+
+## Stage 5: Sequence Index
+
+### Tasks
+
+1. Implement `src/tss_data/sequence_index.py`.
+2. Discover per-assembly package files under a local NCBI Datasets package directory.
+3. Build a file manifest for genome FASTA, RNA FASTA, GFF3, GTF, GBFF, and sequence report files.
+4. Parse sequence report JSONL/TSV/CSV files into `sequences.tsv` rows.
+5. Add tests for complete packages, missing files, duplicate accessions, sequence report parsing, and unsupported formats.
+
+### Do Not Do In Stage 5
+
+- Do not parse GFF3/GTF/GBFF annotation features.
+- Do not derive TSS/promoter candidates.
+- Do not extract FASTA subsequences.
+- Do not add SRA, Aspera, TPM, or RNA-seq logic to the main pipeline.
+
+### Acceptance Commands
+
+```bash
+python -m pip install -e .
+python -m compileall src
+pytest tests/test_sequence_index.py -q
+pytest -q
+```
+
+### Stage 5 Outputs
+
+```text
+src/tss_data/sequence_index.py
+tests/test_sequence_index.py
+data/interim/file_manifest.tsv
+data/processed/sequences.tsv
+```
+
+
 ## Later Stages
 
-Stage 5 builds the sequence index. Later stages parse annotations, derive candidates, extract sequences, and generate QC summaries.
+Stage 6 parses annotation features. Later stages derive candidates, extract sequences, and generate QC summaries.
