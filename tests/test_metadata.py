@@ -131,3 +131,41 @@ def test_build_assemblies_tsv_writes_expected_columns(tmp_path):
         table_rows = list(csv.DictReader(handle, delimiter="\t"))
     assert table_rows[0]["assembly_accession"] == "GCF_000005845.2"
     assert table_rows[0]["organism_type"] == "prokaryote"
+
+
+def test_duplicate_assembly_accession_raises(tmp_path):
+    jsonl = tmp_path / "assembly_data_report.jsonl"
+    write_jsonl(
+        jsonl,
+        [
+            {"accession": "GCF_000005845.2", "organism": {"superkingdom": "Bacteria"}},
+            {"accession": "GCF_000005845.2", "organism": {"superkingdom": "Bacteria"}},
+        ],
+    )
+
+    with pytest.raises(ValueError, match="Duplicate assembly_accession: GCF_000005845.2"):
+        parse_assembly_metadata_jsonl(jsonl, ORGANISM_TYPE_RULES)
+
+
+def test_unknown_or_missing_superkingdom_is_explicitly_handled(tmp_path):
+    jsonl = tmp_path / "assembly_data_report.jsonl"
+    write_jsonl(
+        jsonl,
+        [
+            {
+                "accession": "GCF_000005845.2",
+                "taxonomicLineage": [{"rank": "species", "name": "Escherichia coli"}],
+            },
+            {"accession": "GCF_000006765.1", "taxonomicLineage": "cellular organisms; Proteobacteria"},
+            {"accession": "GCF_000007805.1", "taxon-superkingdom": "Unclassified"},
+        ],
+    )
+
+    rows = parse_assembly_metadata_jsonl(jsonl, ORGANISM_TYPE_RULES, download_date="2026-05-27")
+
+    assert rows[0]["taxon_superkingdom"] == "unknown"
+    assert rows[0]["organism_type"] == "unknown"
+    assert rows[1]["taxon_superkingdom"] == "unknown"
+    assert rows[1]["organism_type"] == "unknown"
+    assert rows[2]["taxon_superkingdom"] == "Unclassified"
+    assert rows[2]["organism_type"] == "unknown"

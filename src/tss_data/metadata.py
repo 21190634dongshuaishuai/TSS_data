@@ -36,6 +36,7 @@ def parse_assembly_metadata_jsonl(
     rows: list[dict[str, str]] = []
     for line_no, record in _read_jsonl_records(jsonl_path):
         rows.append(normalize_assembly_record(record, organism_type_rules, download_date, line_no))
+    _ensure_unique_assembly_accessions(rows)
     return rows
 
 
@@ -88,8 +89,8 @@ def normalize_assembly_record(
         raise ValueError(f"Missing assembly_accession{suffix}")
     accession = validate_gcf_accession(accession)
 
-    superkingdom = _extract_superkingdom(record)
-    organism_type = organism_type_rules.get(superkingdom, "") if superkingdom else ""
+    superkingdom = _extract_superkingdom(record) or "unknown"
+    organism_type = organism_type_rules.get(superkingdom, "unknown")
 
     return {
         "assembly_accession": accession,
@@ -116,6 +117,15 @@ def normalize_assembly_record(
         ),
         "download_date": download_date or date.today().isoformat(),
     }
+
+
+def _ensure_unique_assembly_accessions(rows: Iterable[dict[str, str]]) -> None:
+    seen: set[str] = set()
+    for row in rows:
+        accession = row["assembly_accession"]
+        if accession in seen:
+            raise ValueError(f"Duplicate assembly_accession: {accession}")
+        seen.add(accession)
 
 
 def _read_jsonl_records(jsonl_path: str | Path) -> Iterable[tuple[int, dict[str, Any]]]:
