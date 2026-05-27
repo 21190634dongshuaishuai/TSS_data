@@ -257,7 +257,9 @@ def _get_record_value(record: dict[str, Any], *candidate_keys: str) -> str:
     for key in candidate_keys:
         value = normalized_record.get(_normalize_key(key))
         if value not in (None, ""):
-            return str(value)
+            text = str(value).strip()
+            if text:
+                return text
     return ""
 
 
